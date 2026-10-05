@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detective de Patrones: ¿Cuál Sigue? - Salta y Descubre</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #f0fdf4;
+      --card-bg: #ffffff;
+      --primary: #0284c7;
+      --accent-5: #f59e0b;
+      --accent-10: #10b981;
+      --frog-green: #22c55e;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #dcfce7 0%, #f0fdf4 40%, #f8fafc 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    header h1 {
+      font-family: 'Fredoka', cursive;
+      font-size: 2.1rem;
+      color: #047857;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    header p {
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+      max-width: 1180px;
+      width: 100%;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border-radius: 26px;
+      padding: 22px;
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Pestañas de modo */
+    .pattern-tabs {
+      display: flex;
+      gap: 10px;
+      background: #f1f5f9;
+      padding: 6px;
+      border-radius: 18px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      font-family: 'Fredoka', cursive;
+      font-size: 1.05rem;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active-5 {
+      background: var(--accent-5);
+      color: white;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+    }
+
+    .tab-btn.active-10 {
+      background: var(--accent-10);
+      color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    }
+
+    /* Arena del Reto */
+    .challenge-arena {
+      background: #ffffff;
+      border: 3px solid #bbf7d0;
+      border-radius: 22px;
+      padding: 18px;
+      text-align: center;
+      position: relative;
+    }
+
+    .score-badge {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: #ecfdf5;
+      color: #047857;
+      padding: 6px 14px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      border: 1px solid #a7f3d0;
+    }
+
+    .challenge-title {
+      font-family: 'Fredoka', cursive;
+      font-size: 1.3rem;
+      color: #047857;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .sequence-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .seq-card {
+      min-width: 58px;
+      height: 64px;
+      background: #f8fafc;
+      border: 2px solid #cbd5e1;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fredoka', cursive;
+      font-size: 1.6rem;
+      color: var(--text);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    .seq-card .sub-tag {
+      font-size: 0.65rem;
+      color: var(--muted);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      margin-top: -4px;
+    }
+
+    .seq-card.mystery {
+      border: 3px dashed var(--accent-10);
+      background: #f0fdf4;
+      color: var(--accent-10);
+      animation: bounceBox 1.6s infinite;
+    }
+
+    @keyframes bounceBox {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .seq-arrow {
+      font-size: 1.1rem;
+      color: #94a3b8;
+    }
+
+    .options-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    .opt-choice-btn {
+      font-family: 'Fredoka', cursive;
+      font-size: 1.4rem;
+      padding: 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+      transition: all 0.15s ease;
+    }
+
+    .opt-choice-btn:hover {
+      border-color: var(--primary);
+      background: #f0f9ff;
+      transform: translateY(-2px);
+    }
+
+    .opt-choice-btn.selected-option {
+      border-color: #0284c7;
+      background: #e0f2fe;
+    }
+
+    .opt-choice-btn.selected-correct {
+      background: #22c55e !important;
+      color: white !important;
+      border-color: #16a34a !important;
+    }
+
+    /* Pista interactiva de saltos */
+    .verification-zone {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .verify-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .verify-header h4 {
+      font-family: 'Fredoka', cursive;
+      font-size: 1.1rem;
+      color: #0369a1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-counter-badge {
+      font-size: 0.95rem;
+      font-weight: 800;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 6px 12px;
+      border-radius: 12px;
+    }
+
+    .interactive-line-wrapper {
+      position: relative;
+      background: #ffffff;
+      border: 2px solid var(--border);
+      border-radius: 18px;
+      padding: 16px 10px;
+      overflow-x: auto;
+    }
+
+    .number-track {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      min-width: 520px;
+      justify-content: flex-start;
+      padding-bottom: 4px;
+    }
+
+    .track-step-node {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #f8fafc;
+      border: 2px solid #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fredoka', cursive;
+      font-size: 1.05rem;
+      color: var(--muted);
+      position: relative;
+      transition: all 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .track-step-node.start-node {
+      background: #dbeafe;
+      border-color: #3b82f6;
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+
+    .track-step-node.hopped-node {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #b45309;
+      transform: scale(1.06);
+    }
+
+    .track-step-node.frog-now {
+      background: #22c55e !important;
+      border-color: #15803d !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.25);
+      animation: popFrog 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popFrog {
+      0% { transform: scale(0.6); }
+      70% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    /* Botones de acción */
+    .action-jump-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .jump-btn {
+      font-family: 'Fredoka', cursive;
+      font-size: 1.05rem;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .jump-btn:active {
+      transform: translateY(2px);
+    }
+
+    .btn-step-one {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 2px solid #bae6fd;
+    }
+
+    .btn-step-one:hover {
+      background: #bae6fd;
+    }
+
+    .btn-step-group {
+      background: #22c55e;
+      color: #ffffff;
+      border: 2px solid #16a34a;
+    }
+
+    .btn-step-group:hover {
+      background: #16a34a;
+    }
+
+    .btn-reset-hops {
+      background: #ffffff;
+      color: #64748b;
+      border: 2px solid #cbd5e1;
+    }
+
+    .btn-reset-hops:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .btn-next-round {
+      background: #0284c7;
+      color: #ffffff;
+    }
+
+    .btn-next-round:hover {
+      background: #0369a1;
+    }
+
+    /* Tabla del 100 */
+    .grid-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .grid-header-note {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .number-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 5px;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fredoka', cursive;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1.5px solid #f1f5f9;
+      color: var(--muted);
+      transition: all 0.2s ease;
+    }
+
+    .cell.path-highlight {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #b45309;
+      font-weight: 700;
+    }
+
+    .cell.current-frog-pos {
+      background: #22c55e !important;
+      border-color: #15803d !important;
+      color: white !important;
+      transform: scale(1.15);
+      z-index: 5;
+      box-shadow: 0 4px 10px rgba(34, 197, 94, 0.4);
+    }
+
+    /* Mensajes de feedback */
+    .feedback-banner {
+      font-size: 1rem;
+      font-weight: 800;
+      padding: 10px;
+      border-radius: 12px;
+      text-align: center;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .feedback-idle { background: #f8fafc; color: var(--muted); border: 1px solid var(--border); }
+    .feedback-correct { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .feedback-wrong { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+    @media (max-width: 900px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1><i class="fa-solid fa-frog" style="color:#22c55e;"></i> Detective de Patrones: ¿Cuál Sigue?</h1>
+    <p>Explora saltando en la recta o elige una opción para comprobar la regularidad</p>
+  </header>
+
+  <div class="main-layout">
+
+    <!-- COLUMNA IZQUIERDA -->
+    <div class="panel">
+
+      <!-- Pestañas de modo (+5 / +10) -->
+      <div class="pattern-tabs">
+        <button class="tab-btn active-5" id="tab5" onclick="changeStep(5)">
+          <i class="fa-solid fa-hand-sparkles"></i> Patrón de 5 en 5
+        </button>
+        <button class="tab-btn" id="tab10" onclick="changeStep(10)">
+          <i class="fa-solid fa-bolt"></i> Patrón de 10 en 10
+        </button>
+      </div>
+
+      <!-- Desafío "¿Cuál Sigue?" -->
+      <div class="challenge-arena">
+        <div class="score-badge" id="scoreCounter">Aciertos: 0</div>
+        
+        <h3 class="challenge-title">
+          <i class="fa-solid fa-magnifying-glass"></i> ¿Qué número completa el patrón?
+        </h3>
+        
+        <p style="font-size: 0.88rem; color: var(--muted); font-weight:700;">
+          Puedes usar los saltos abajo para descubrirlo o elegir directamente tu opción:
+        </p>
+
+        <!-- Tarjetas de la secuencia -->
+        <div class="sequence-display" id="sequenceCards"></div>
+
+        <!-- Opciones de respuesta -->
+        <div class="options-container" id="optionsBox"></div>
+      </div>
+
+      <!-- Banner de Estado -->
+      <div class="feedback-banner feedback-idle" id="feedbackMsg">
+        🐸 La ranita está lista. ¡Usa los saltos para contar o selecciona tu respuesta!
+      </div>
+
+      <!-- Pista interactiva de saltos LIBRE -->
+      <div class="verification-zone" id="verifyZone">
+        <div class="verify-header">
+          <h4><i class="fa-solid fa-shoe-prints"></i> Pista de Exploración de Saltos</h4>
+          <span class="step-counter-badge" id="stepCounterBadge">Saltos dados: 0 / 5</span>
+        </div>
+
+        <p style="font-size: 0.85rem; color: #475569;">
+          Haz avanzar a la ranita con <strong>+1</strong> (para contar uno a uno) o con el <strong>gran salto</strong> para ver a dónde llega:
+        </p>
+
+        <div class="interactive-line-wrapper">
+          <div class="number-track" id="numberTrack"></div>
+        </div>
+
+        <!-- Controles activos desde el inicio -->
+        <div class="action-jump-controls">
+          <button class="jump-btn btn-step-one" id="btnJump1" onclick="performJump(1)">
+            <i class="fa-solid fa-paw"></i> Salto de +1
+          </button>
+          <button class="jump-btn btn-step-group" id="btnJumpGroup" onclick="performJump(currentStep)">
+            <i class="fa-solid fa-angles-right"></i> Gran Salto de +<span id="jumpGroupVal">5</span>
+          </button>
+          <button class="jump-btn btn-reset-hops" id="btnResetHops" onclick="resetHopsOnly()" title="Volver al inicio de los saltos">
+            <i class="fa-solid fa-rotate-left"></i> Reiniciar saltos
+          </button>
+          <button class="jump-btn btn-next-round" id="btnNextChallenge" onclick="nextRound()" style="display:none;">
+            <i class="fa-solid fa-forward"></i> ¡Siguiente Desafío!
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUMNA DERECHA -->
+    <div class="panel">
+      <div class="grid-container">
+        <div class="grid-header-note">
+          <i class="fa-solid fa-table-cells"></i> La posición de la ranita se refleja en la Tabla del 100:
+        </div>
+        <div class="number-grid" id="numberGrid"></div>
+      </div>
+
+      <div style="background:#f8fafc; border-left:4px solid #0284c7; padding:12px 14px; border-radius:0 12px 12px 0; font-size:0.88rem; color:#334155;">
+        <strong style="color:#0284c7;">Consejo del Detective:</strong>
+        <p id="ruleHint" style="margin-top:4px;">
+          Al sumar de 5 en 5, las unidades alternan entre dos cifras fijas (ejemplo: 5 y 0, o 3 y 8).
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* =========================================================================
+       1. EFECTOS DE SONIDO SINTÉTICOS (Web Audio API)
+       ========================================================================= */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playAudio(type = 'hop') {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'hop') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(560, now + 0.08);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else if (type === 'win') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.23);
+        } else if (type === 'oops') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(240, now);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.12);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+          osc.start(now);
+          osc.stop(now + 0.14);
+        }
+      } catch (e) {}
+    }
+
+    /* =========================================================================
+       2. ESTADO DE LA APLICACIÓN
+       ========================================================================= */
+    let currentStep = 5;
+    let sequence = [];
+    let startVal = 0;
+    let targetVal = 0;
+    let selectedAnswer = null;
+    let frogPosition = 0;
+    let score = 0;
+
+    const numberGrid = document.getElementById('numberGrid');
+    const sequenceCards = document.getElementById('sequenceCards');
+    const optionsBox = document.getElementById('optionsBox');
+    const numberTrack = document.getElementById('numberTrack');
+    const feedbackMsg = document.getElementById('feedbackMsg');
+    const stepCounterBadge = document.getElementById('stepCounterBadge');
+    const btnNextChallenge = document.getElementById('btnNextChallenge');
+
+    /* =========================================================================
+       3. CONSTRUCCIÓN DE LA TABLA DEL 100
+       ========================================================================= */
+    function build100Grid() {
+      numberGrid.innerHTML = '';
+      for (let i = 1; i <= 100; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.id = `grid-cell-${i}`;
+        cell.textContent = i;
+        numberGrid.appendChild(cell);
+      }
+    }
+
+    /* =========================================================================
+       4. GENERADOR DEL DESAFÍO
+       ========================================================================= */
+    function changeStep(step) {
+      currentStep = step;
+      document.getElementById('tab5').classList.toggle('active-5', step === 5);
+      document.getElementById('tab10').classList.toggle('active-10', step === 10);
+      document.getElementById('jumpGroupVal').textContent = step;
+
+      const hint = document.getElementById('ruleHint');
+      if (step === 5) {
+        hint.textContent = 'Al sumar de 5 en 5, las unidades alternan entre dos cifras fijas (ejemplo: 5 y 0, o 3 y 8).';
+      } else {
+        hint.textContent = 'Al sumar de 10 en 10, la cifra de las unidades NUNCA cambia; solo aumenta la decena (+1).';
+      }
+
+      nextRound();
+    }
+
+    function nextRound() {
+      selectedAnswer = null;
+      btnNextChallenge.style.display = 'none';
+
+      feedbackMsg.className = 'feedback-banner feedback-idle';
+      feedbackMsg.innerHTML = `🐸 Ranita en <strong>0 saltos</strong>. ¡Salta libremente o escoge tu respuesta!`;
+
+      // Generar secuencia de 3 números
+      const maxStart = 85 - (currentStep * 3);
+      const startCandidate = Math.floor(Math.random() * (maxStart / 2)) * 2 + (Math.random() > 0.4 ? 0 : 3);
+      const safeStart = Math.max(1, startCandidate);
+
+      const n1 = safeStart;
+      const n2 = n1 + currentStep;
+      const n3 = n2 + currentStep;
+      targetVal = n3 + currentStep;
+      sequence = [n1, n2, n3];
+
+      startVal = n3;
+      frogPosition = startVal;
+
+      renderSequenceDisplay();
+      renderOptions();
+      renderTrack();
+      updateGridHighlights();
+    }
+
+    function renderSequenceDisplay() {
+      sequenceCards.innerHTML = '';
+      sequence.forEach((num, index) => {
+        const card = document.createElement('div');
+        card.className = 'seq-card';
+        card.innerHTML = `
+          <span>${num}</span>
+          <span class="sub-tag">Paso ${index + 1}</span>
+        `;
+        sequenceCards.appendChild(card);
+
+        const arrow = document.createElement('div');
+        arrow.className = 'seq-arrow';
+        arrow.innerHTML = `<i class="fa-solid fa-arrow-right"></i>`;
+        sequenceCards.appendChild(arrow);
+      });
+
+      const mysteryCard = document.createElement('div');
+      mysteryCard.className = 'seq-card mystery';
+      mysteryCard.id = 'mysteryBox';
+      mysteryCard.innerHTML = `<span>?</span><span class="sub-tag">+${currentStep}</span>`;
+      sequenceCards.appendChild(mysteryCard);
+    }
+
+    function renderOptions() {
+      optionsBox.innerHTML = '';
+
+      let opts = [targetVal];
+      const distractor1 = targetVal + (Math.random() > 0.5 ? 5 : -5);
+      const distractor2 = targetVal + (Math.random() > 0.5 ? 10 : -currentStep);
+
+      [distractor1, distractor2].forEach(d => {
+        if (d > 0 && d !== targetVal && !opts.includes(d)) opts.push(d);
+        else opts.push(targetVal + (opts.length * 3));
+      });
+
+      opts.sort(() => Math.random() - 0.5);
+
+      opts.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-choice-btn';
+        btn.id = `opt-btn-${val}`;
+        btn.textContent = val;
+        btn.onclick = () => selectAnswer(val);
+        optionsBox.appendChild(btn);
+      });
+    }
+
+    /* =========================================================================
+       5. INTERACCIÓN Y SALTOS TOTALMENTE LIBRES
+       ========================================================================= */
+    function renderTrack() {
+      numberTrack.innerHTML = '';
+      const rangeEnd = Math.max(targetVal + 3, (selectedAnswer || targetVal) + 2);
+      
+      for (let i = startVal; i <= rangeEnd; i++) {
+        const node = document.createElement('div');
+        node.className = 'track-step-node';
+        node.id = `track-node-${i}`;
+        node.textContent = i;
+
+        if (i === startVal) node.classList.add('start-node');
+        if (i === frogPosition) node.classList.add('frog-now');
+
+        numberTrack.appendChild(node);
+      }
+
+      updateTrackBadges();
+    }
+
+    function updateTrackBadges() {
+      const jumped = frogPosition - startVal;
+      stepCounterBadge.textContent = `Saltos dados: ${jumped} / ${currentStep}`;
+
+      const rangeEnd = Math.max(targetVal + 3, (selectedAnswer || targetVal) + 2);
+      for (let i = startVal; i <= rangeEnd; i++) {
+        const el = document.getElementById(`track-node-${i}`);
+        if (el) {
+          el.className = 'track-step-node';
+          if (i === startVal) el.classList.add('start-node');
+          if (i > startVal && i <= frogPosition) el.classList.add('hopped-node');
+          if (i === frogPosition) el.classList.add('frog-now');
+        }
+      }
+
+      const currentEl = document.getElementById(`track-node-${frogPosition}`);
+      if (currentEl) {
+        currentEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+
+      updateGridHighlights();
+    }
+
+    // Saltar en cualquier momento
+    function performJump(amount) {
+      if (frogPosition + amount > 100) return;
+
+      frogPosition += amount;
+      playAudio('hop');
+      updateTrackBadges();
+
+      const totalHop = frogPosition - startVal;
+
+      // Si ya había seleccionado respuesta, o si da los saltos correspondientes
+      if (totalHop === currentStep) {
+        feedbackMsg.className = 'feedback-banner feedback-correct';
+        feedbackMsg.innerHTML = `🎯 ¡Completaste los <strong>+${currentStep} saltos</strong> y llegaste a <strong>${frogPosition}</strong>!`;
+
+        // Si ya había marcado esa respuesta, validamos de una vez
+        if (selectedAnswer !== null) {
+          evaluateMatch();
+        } else {
+          feedbackMsg.innerHTML += ` Ahora escoge tu opción arriba.`;
+        }
+      } else if (totalHop > currentStep) {
+        feedbackMsg.className = 'feedback-banner feedback-wrong';
+        feedbackMsg.innerHTML = `⚠️ Te pasaste (+${totalHop} saltos). El patrón es sumar +${currentStep}. Puedes pulsar "Reiniciar saltos".`;
+      } else {
+        feedbackMsg.className = 'feedback-banner feedback-idle';
+        feedbackMsg.innerHTML = `🐸 Vas en <strong>${frogPosition}</strong> (llevas +${totalHop} saltos). Te faltan ${currentStep - totalHop} para el paso completo.`;
+      }
+    }
+
+    // Reiniciar sólo la posición de los saltos sin reiniciar el desafío
+    function resetHopsOnly() {
+      frogPosition = startVal;
+      playAudio('hop');
+      updateTrackBadges();
+      feedbackMsg.className = 'feedback-banner feedback-idle';
+      feedbackMsg.innerHTML = `🔄 Ranita reiniciada en <strong>${startVal}</strong>. ¡Vuelve a dar los saltos!`;
+    }
+
+    // Selección de la opción
+    function selectAnswer(chosen) {
+      selectedAnswer = chosen;
+
+      document.querySelectorAll('.opt-choice-btn').forEach(btn => {
+        btn.classList.remove('selected-option');
+      });
+      const selectedBtn = document.getElementById(`opt-btn-${chosen}`);
+      if (selectedBtn) {
+        selectedBtn.classList.add('selected-option');
+      }
+
+      const jumped = frogPosition - startVal;
+
+      if (jumped === currentStep) {
+        // Ya había hecho los saltos exactos
+        evaluateMatch();
+      } else {
+        // Aún no hace los saltos completos o no ha saltado
+        feedbackMsg.className = 'feedback-banner feedback-idle';
+        feedbackMsg.innerHTML = `
+          Elegiste <strong>${chosen}</strong>. 
+          Haz saltar a la ranita <strong>+${currentStep}</strong> desde ${startVal} para comprobar si llegas a ese número.
+        `;
+        playAudio('hop');
+      }
+    }
+
+    function evaluateMatch() {
+      const mysteryBox = document.getElementById('mysteryBox');
+      mysteryBox.innerHTML = `<span>${targetVal}</span><span class="sub-tag">Comprobado</span>`;
+
+      if (selectedAnswer === targetVal && frogPosition === targetVal) {
+        score++;
+        document.getElementById('scoreCounter').textContent = `Aciertos: ${score}`;
+        feedbackMsg.className = 'feedback-banner feedback-correct';
+        feedbackMsg.innerHTML = `🎉 ¡Brillante! La ranita saltó +${currentStep} y cayó exactamente en ${targetVal}. ¡Respuesta comprobada!`;
+
+        const btnWin = document.getElementById(`opt-btn-${targetVal}`);
+        if (btnWin) btnWin.className = 'opt-choice-btn selected-correct';
+
+        playAudio('win');
+        confetti({
+          particleCount: 65,
+          spread: 70,
+          origin: { y: 0.7 }
+        });
+      } else {
+        feedbackMsg.className = 'feedback-banner feedback-wrong';
+        feedbackMsg.innerHTML = `💡 Al dar +${currentStep} saltos llegamos a <strong>${targetVal}</strong>, pero habías seleccionado <strong>${selectedAnswer}</strong>. ¡Observa la terminación en la tabla!`;
+        playAudio('oops');
+      }
+
+      btnNextChallenge.style.display = 'inline-flex';
+    }
+
+    /* =========================================================================
+       6. SINCRONIZACIÓN CON LA TABLA DEL 100
+       ========================================================================= */
+    function updateGridHighlights() {
+      for (let i = 1; i <= 100; i++) {
+        const cell = document.getElementById(`grid-cell-${i}`);
+        if (cell) cell.className = 'cell';
+      }
+
+      sequence.forEach(num => {
+        const cell = document.getElementById(`grid-cell-${num}`);
+        if (cell) cell.classList.add('path-highlight');
+      });
+
+      if (frogPosition >= 1 && frogPosition <= 100) {
+        const frogCell = document.getElementById(`grid-cell-${frogPosition}`);
+        if (frogCell) frogCell.classList.add('current-frog-pos');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      build100Grid();
+      nextRound();
+    });
+  </script>
+</body>
+</html>
